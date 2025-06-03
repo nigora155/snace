@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zigzag Dragon AI</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      overflow: hidden;
+    }
+
+    .segment {
+      position: absolute;
+      background-color: red;
+      border: 2px solid pink;
+      box-shadow: 0 0 6px rgb(218, 53, 53);
+      box-sizing: border-box;
+      border-radius: 4px;
+    }
+
+    .head {
+      width: 40px;
+      height: 40px;
+      border-radius: 10%;
+    }
+
+    .body {
+      width: 30px;
+      height: 30px;
+    }
+
+    .tail {
+      width: 20px;
+      height: 20px;
+    }
+
+    .eye {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background-color: red;
+      border-radius: 50%;
+      box-shadow: 0 0 6px red;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.4); opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const segments = [];
+    const totalSegments = 25;
+
+    // Головной сегмент
+    const headEl = document.createElement('div');
+    headEl.classList.add('segment', 'head');
+    document.body.appendChild(headEl);
+
+    const eye1 = document.createElement('div');
+    const eye2 = document.createElement('div');
+    eye1.classList.add('eye');
+    eye2.classList.add('eye');
+    headEl.appendChild(eye1);
+    headEl.appendChild(eye2);
+
+    segments.push({ el: headEl, x: 100, y: 100, offsetDir: 1 });
+
+    // Остальные сегменты
+    for (let i = 1; i < totalSegments; i++) {
+      const seg = document.createElement('div');
+      seg.classList.add('segment');
+      if (i > totalSegments - 5) seg.classList.add('tail');
+      else seg.classList.add('body');
+      document.body.appendChild(seg);
+
+      segments.push({
+        el: seg,
+        x: 100 - i * 32,
+        y: 100,
+        offsetDir: i % 2 === 0 ? 1 : -1
+      });
+    }
+
+    let targetX = 100;
+    let targetY = 100;
+    let lastMouseTime = Date.now();
+    let mouseActive = true;
+
+    // Двигаем по мышке
+    document.addEventListener('mousemove', (e) => {
+      targetX = Math.round(e.clientX / 10) * 10;
+      targetY = Math.round(e.clientY / 10) * 10;
+      lastMouseTime = Date.now();
+      mouseActive = true;
+    });
+
+    // Функция: выбирает случайную точку
+    function randomTarget() {
+      const padding = 100;
+      targetX = Math.floor(padding + Math.random() * (window.innerWidth - padding * 2));
+      targetY = Math.floor(padding + Math.random() * (window.innerHeight - padding * 2));
+    }
+
+    // Каждые 2 секунды проверка на "бездействие"
+    setInterval(() => {
+      const now = Date.now();
+      if (now - lastMouseTime > 2000) {
+        if (mouseActive) {
+          mouseActive = false;
+          randomTarget(); // первый раз — выбрали цель
+        } else if (Math.random() < 0.05) {
+          randomTarget(); // иногда меняем цель
+        }
+      }
+    }, 200);
+
+    function move() {
+      const head = segments[0];
+
+      // Двигаем голову к цели
+      if (Math.abs(head.x - targetX) > Math.abs(head.y - targetY)) {
+        head.x += Math.sign(targetX - head.x) * 10;
+      } else {
+        head.y += Math.sign(targetY - head.y) * 10;
+      }
+
+      // Остальные сегменты зигзагом
+      for (let i = segments.length - 1; i > 0; i--) {
+        const prev = segments[i - 1];
+        segments[i].x = prev.x + segments[i].offsetDir * 4;
+        segments[i].y = prev.y;
+      }
+
+      // Отрисовка
+      for (const seg of segments) {
+        seg.el.style.left = seg.x + 'px';
+        seg.el.style.top = seg.y + 'px';
+      }
+
+      // Глаза
+      eye1.style.left = '6px';
+      eye1.style.top = '10px';
+      eye2.style.left = '24px';
+      eye2.style.top = '10px';
+
+      requestAnimationFrame(move);
+    }
+
+    move();
+  </script>
+</body>
+</html>
